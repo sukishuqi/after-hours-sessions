@@ -152,8 +152,7 @@ label {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4/5;
-  object-fit: cover;
+  object-fit: contain;
   margin-bottom: 28px;
 }
 .session-progress {
@@ -225,8 +224,8 @@ label {
 }
 .poster-link img {
   width: 100%;
-  aspect-ratio: 4/5;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 .session-list-copy h2 {
