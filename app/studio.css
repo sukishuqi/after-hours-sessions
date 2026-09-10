@@ -259,7 +259,7 @@
   border: 1px solid #353732;
   border-radius: 12px;
 }
-.signup-app .signup-song-row {
+.signup-app button.signup-song-row:not([role]) {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -270,6 +270,20 @@
   border-bottom: 1px solid #353732;
   border-radius: 0;
   padding: 14px 4px;
+}
+.signup-app .signup-song-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.signup-app .signup-song-row .signup-song-action {
+  flex: 0 0 auto;
+  margin-left: 12px;
+  font-size: 13px;
+  color: #ed9d68;
+}
+.signup-app .signup-song-row .signup-vacancy {
+  color: #d9ac89;
 }
 .signup-app .signup-song-row > svg {
   flex-shrink: 0;

@@ -134,7 +134,12 @@ async function success(route, body) {
     availability = config.dates.map((d) => d.id);
   const selections = songs
     .slice(0, 2)
-    .map((song, i) => ({ songId: song.id, roles: ['主唱'], priority: i + 1 }));
+    .map((song, i) => ({
+      songId: song.id,
+      roles: ['主唱'],
+      priority: i + 1,
+      substitute: i === 1,
+    }));
   await success(intent, {
     name: credentials.name,
     contact: credentials.contact,
@@ -148,6 +153,11 @@ async function success(route, body) {
   assert.equal(submitted.status, 'intent');
   assert.deepEqual(submitted.availability, availability);
   assert.equal(submitted.selections.length, 2);
+  assert.equal(
+    submitted.selections[1].substitute,
+    true,
+    'Standby intent survives saving and login',
+  );
   assert.equal((await server.allPeople()).length, 1);
   assert.equal((await server.allSessions())[0].total, 1);
   await success(access, { type: 'member-logout' });

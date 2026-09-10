@@ -877,6 +877,7 @@ export default function AdminSession() {
                                 ?.title
                             }{' '}
                             ·{' '}
+                            {s.substitute && <>{t('补位候选', 'Standby')} · </>}
                             {p.participation === 'performer' && (
                               <>
                                 {priorityOf(s, index) === 1

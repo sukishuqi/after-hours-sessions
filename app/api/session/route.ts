@@ -8,6 +8,7 @@ import {
   cleanSessionId,
 } from '@/lib/server';
 import { savedLineup } from '@/lib/matching';
+import { songVacancies } from '@/lib/song-availability';
 export async function GET(req: Request) {
   try {
     const sessionId = cleanSessionId(
@@ -20,6 +21,7 @@ export async function GET(req: Request) {
       me(sessionId),
       isAdmin(),
     ]);
+    const vacancies = songVacancies(songs, people, config);
     return json({
       config,
       lineup: config.matchingPublishedAt
@@ -36,6 +38,7 @@ export async function GET(req: Request) {
         );
         return {
           ...s,
+          vacancy: vacancies.get(s.id),
           count: interested.length,
           votes:
             (config.usePublicLibrary === false

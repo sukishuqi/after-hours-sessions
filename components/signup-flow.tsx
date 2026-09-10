@@ -17,6 +17,7 @@ import { LanguageSwitch, useLocale } from '@/lib/locale';
 import { SongFields, RehearsalFields } from '@/components/song-fields';
 import { Lineup, type VisibleLineup } from '@/components/lineup';
 import { emptyDraft, type SongDraft } from '@/lib/catalog';
+import { sortSongsByVacancy } from '@/lib/song-availability';
 import {
   defaults,
   expired,
@@ -211,6 +212,7 @@ export default function SignupFlow() {
       {
         songId: song.id,
         roles: [],
+        substitute: performing && !!song.vacancy?.ready,
         priority: nextPriority(),
         preferred_key: song.preferred_key,
         version_url: song.version_url,
@@ -651,8 +653,8 @@ export default function SignupFlow() {
                 <p className="muted">
                   {performing
                     ? t(
-                        '每首歌选择角色，标明第一、第二优先。其他歌曲可继续添加。',
-                        'Choose roles for each song and mark first and second preferences. Add more songs if you like.',
+                        '优先显示缺位最少的歌曲，已凑齐的放在后面。选歌后填写角色和优先级，也可以加入补位。缺位按同一候选时间的意向估算，以主理人确认为准。',
+                        'Songs closest to a full lineup come first; covered songs come last. Choose roles and preferences, or join standby. Coverage uses a common candidate date and awaits host confirmation.',
                       )
                     : t(
                         '投票可选，不投票也能继续登记。',
@@ -713,7 +715,7 @@ export default function SignupFlow() {
                   </div>
                 )}
                 <div className="signup-song-list">
-                  {songs
+                  {(performing ? sortSongsByVacancy(songs) : songs)
                     .filter(
                       (s) =>
                         !choices.some((c) => c.songId === s.id) &&
@@ -733,8 +735,27 @@ export default function SignupFlow() {
                             {song.artist} · {song.votes || 0}{' '}
                             {t('票想听', 'listener votes')}
                           </small>
+                          {performing && (
+                            <small className="signup-vacancy">
+                              {song.vacancy?.ready
+                                ? t(
+                                    '意向已凑齐 · 可加入补位',
+                                    'Lineup covered · standby available',
+                                  )
+                                : t('还缺：', 'Needed: ') +
+                                  (song.vacancy?.missing || song.roles)
+                                    .map((role) => t(role))
+                                    .join(' / ')}
+                            </small>
+                          )}
                         </span>
-                        <Plus size={20} />
+                        <span className="signup-song-action">
+                          {performing && song.vacancy?.ready ? (
+                            t('加入补位', 'Standby')
+                          ) : (
+                            <Plus size={20} />
+                          )}
+                        </span>
                       </button>
                     ))}
                   {!songs.some(
@@ -774,6 +795,22 @@ export default function SignupFlow() {
                     </div>
                     {performing && (
                       <>
+                        <label className="signup-check">
+                          <Checkbox
+                            checked={!!choice.substitute}
+                            onCheckedChange={(checked) =>
+                              updateChoice(choice.songId, {
+                                substitute: !!checked,
+                              })
+                            }
+                          />
+                          <span>
+                            {t(
+                              '加入补位（有空缺时再安排）',
+                              'Standby — assign only if a place opens',
+                            )}
+                          </span>
+                        </label>
                         <label htmlFor={'priority-' + choice.songId}>
                           {t('优先级', 'Preference')}
                         </label>
@@ -981,7 +1018,14 @@ export default function SignupFlow() {
                           <span className="signup-kicker">
                             {preference(priorityOf(choice, i))}
                           </span>
-                          <h3>{choiceTitle(choice)}</h3>
+                          <h3>
+                            {choiceTitle(choice)}
+                            {choice.substitute && (
+                              <span className="badge">
+                                {t('补位候选', 'Standby')}
+                              </span>
+                            )}
+                          </h3>
                           <p>{choice.roles.map((r) => t(r)).join(' / ')}</p>
                           {choice.preferred_key && (
                             <small>Key: {choice.preferred_key}</small>

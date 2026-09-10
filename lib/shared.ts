@@ -1,6 +1,7 @@
 import { canonicalTitle } from './catalog';
 export const ROLES = ['主唱', '吉他', '贝斯', '鼓', '键盘', '和声', '其他'];
 export type Selection = {
+  substitute?: boolean;
   priority?: 1 | 2 | 3;
   songId: string;
   roles: string[];
@@ -9,6 +10,7 @@ export type Selection = {
   nomination_note?: string;
 };
 export type Song = {
+  vacancy?: { ready: boolean; missing: string[]; date: string };
   preferred_key: string;
   version_url: string;
   nomination_note: string;

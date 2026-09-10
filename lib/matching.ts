@@ -19,7 +19,7 @@ type Edge = { to: number; reverse: number; capacity: number; cost: number };
 // Min-cost maximum flow. Each person-song gate permits one role per song.
 // Songs are sequential, so a musician may play multiple songs. Extra wishes
 // are expensive; there is no artificial guarantee or hard cap of two songs.
-function matchGroup(
+function matchPrimaryGroup(
   songs: Song[],
   people: Person[],
   date: string,
@@ -70,6 +70,7 @@ function matchGroup(
     edge(source, p, 1, 20);
     edge(source, p, Math.max(0, songs.length - 2), 500);
     person.selections.forEach((selection, index) => {
+      if (selection.substitute) return;
       const song = songs.find((s) => s.id === selection.songId);
       if (!song) return;
       const priority = priorityOf(selection, index),
@@ -137,6 +138,47 @@ function matchGroup(
     };
   });
 }
+function matchGroup(
+  songs: Song[],
+  people: Person[],
+  date: string,
+  kind: Slot['kind'],
+): MatchedSong[] {
+  const primary = matchPrimaryGroup(songs, people, date, kind);
+  const vacancies = songs
+    .map((song) => ({
+      ...song,
+      roles: primary.find((s) => s.songId === song.id)!.missing,
+    }))
+    .filter((s) => s.roles.length);
+  if (!vacancies.length) return primary;
+  const candidates = people.map((person) => ({
+    ...person,
+    selections: person.selections
+      .map((s, i) => ({ ...s, priority: priorityOf(s, i) }))
+      .filter(
+        (s) =>
+          s.substitute &&
+          !primary
+            .find((song) => song.songId === s.songId)
+            ?.members.some((m) => m.personId === person.id),
+      )
+      .map((s) => ({ ...s, substitute: false })),
+  }));
+  const fillers = matchPrimaryGroup(vacancies, candidates, date, kind);
+  return primary.map((song) => {
+    const filled = fillers.find((s) => s.songId === song.songId);
+    return filled
+      ? {
+          ...song,
+          members: [...song.members, ...filled.members],
+          missing: filled.missing,
+          ready: filled.ready,
+        }
+      : song;
+  });
+}
+
 export function matchLineup(
   songs: Song[],
   people: Person[],
