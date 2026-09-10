@@ -1,0 +1,1 @@
+ALTER TABLE `people` ADD `participation` text DEFAULT 'performer' NOT NULL;
