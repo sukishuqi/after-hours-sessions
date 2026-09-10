@@ -112,13 +112,38 @@ export async function allSessions(): Promise<SessionSummary[]> {
        GROUP BY s.id ORDER BY s.created DESC`,
     )
     .all();
-  return rows.results.map((row) => ({
+  const sessions = rows.results.map((row) => ({
     id: String(row.id),
     slug: String(row.slug),
     config: JSON.parse(String(row.config)),
     total: Number(row.total || 0),
     created: String(row.created),
   }));
+  const now = Date.now();
+  function orderTime(session: SessionSummary) {
+    const configured = session.config.selectedDate
+      ? [session.config.selectedDate]
+      : session.config.dates.map((date) => date.id);
+    const times = configured
+      .map((date) => Date.parse(date + '+08:00'))
+      .filter(Number.isFinite);
+    const next = times.filter((time) => time >= now).sort((a, b) => a - b)[0];
+    if (next !== undefined) return { past: false, time: next };
+    return {
+      past: true,
+      time: times.sort((a, b) => b - a)[0] || 0,
+    };
+  }
+  return sessions.sort((a, b) => {
+    const aOrder = orderTime(a);
+    const bOrder = orderTime(b);
+    if (aOrder.past !== bOrder.past) return aOrder.past ? 1 : -1;
+    if (aOrder.time !== bOrder.time)
+      return aOrder.past
+        ? bOrder.time - aOrder.time
+        : aOrder.time - bOrder.time;
+    return b.created.localeCompare(a.created);
+  });
 }
 export function person(row: Record<string, unknown>): Person {
   const {
