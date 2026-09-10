@@ -108,7 +108,7 @@ export async function allSessions(): Promise<SessionSummary[]> {
   const rows = await db()
     .prepare(
       `SELECT s.id,s.slug,s.config,s.created,COUNT(p.id) total
-       FROM sessions s LEFT JOIN people p ON p.session_id=s.id
+       FROM sessions s LEFT JOIN people p ON p.session_id=s.id AND p.status<>'draft'
        GROUP BY s.id ORDER BY s.created DESC`,
     )
     .all();
@@ -179,7 +179,9 @@ export async function me(sessionId?: string) {
 }
 export async function allPeople(id = 'session-001') {
   const rows = await db()
-    .prepare('SELECT * FROM people WHERE session_id=? ORDER BY created')
+    .prepare(
+      "SELECT * FROM people WHERE session_id=? AND status<>'draft' ORDER BY created",
+    )
     .bind(cleanSessionId(id))
     .all();
   return rows.results.map(person);

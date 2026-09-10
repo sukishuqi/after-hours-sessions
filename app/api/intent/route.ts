@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       note = str(data.note || '', 500);
     if (!name || !contact) throw new Error('请填写名字和联系方式');
     const current = await me(sessionId);
-    if (current && current.status !== 'intent')
+    if (current && !['intent', 'draft'].includes(current.status))
       throw new Error('安排已经确认，修改请联系主理人');
     const plainKey = contactKey(contact);
     const key = scopedContactKey(sessionId, contact);
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
       statements.push(
         db()
           .prepare(
-            'UPDATE people SET name=?,contact=?,availability=?,selections=?,note=?,participation=?,contact_key=?,password_hash=COALESCE(?,password_hash) WHERE id=? AND status=?',
+            "UPDATE people SET name=?,contact=?,availability=?,selections=?,note=?,participation=?,contact_key=?,password_hash=COALESCE(?,password_hash),status='intent' WHERE id=? AND status=?",
           )
           .bind(
             name,
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
             key,
             credential,
             id,
-            'intent',
+            current.status,
           ),
       );
     } else {

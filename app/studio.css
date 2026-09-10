@@ -1,3 +1,406 @@
+/* The registration route is a compact, single-task mobile flow. */
+.signup-app {
+  max-width: 620px;
+  min-height: 100dvh;
+  margin: auto;
+  padding-bottom: calc(108px + env(safe-area-inset-bottom));
+}
+.signup-app .signup-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 72px;
+  padding: calc(10px + env(safe-area-inset-top)) 20px 10px;
+  background: #101110f5;
+  border: 0;
+  gap: 12px;
+}
+.signup-app .signup-header .signup-back {
+  padding: 8px;
+  width: 44px;
+  height: 44px;
+  color: #f3f2ec;
+  background: transparent;
+  border: 0;
+}
+.signup-app .signup-brand {
+  margin-right: auto;
+}
+.signup-app .signup-brand img {
+  width: 56px;
+  height: 48px;
+}
+.signup-app .signup-progress {
+  display: flex;
+  gap: 5px;
+  padding: 0 24px;
+}
+.signup-app .signup-progress span {
+  height: 3px;
+  flex: 1;
+  background: #353732;
+  border-radius: 3px;
+}
+.signup-app .signup-progress .is-done {
+  background: #ed7733;
+}
+.signup-app .signup-body {
+  padding: 24px;
+}
+.signup-app .signup-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #b8a18a;
+  margin: 0 0 14px;
+}
+.signup-app h1 {
+  font-size: clamp(28px, 7.8vw, 38px);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+  margin: 0 0 18px;
+  outline: none;
+}
+.signup-app h2 {
+  font-size: 19px;
+  line-height: 1.4;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+.signup-app h3 {
+  font-size: 17px;
+  margin: 0;
+}
+.signup-app p {
+  margin: 8px 0 16px;
+}
+.signup-app .muted {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.signup-app button:not([role]),
+.signup-app .signup-done {
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.signup-app label {
+  font-size: 14px;
+  margin: 18px 0 8px;
+}
+.signup-app input:not([type='checkbox']),
+.signup-app select,
+.signup-app textarea {
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px;
+  background: #181a17;
+  color: #f3f2ec;
+  border: 1px solid #40433b;
+  border-radius: 10px;
+  padding: 11px 12px;
+}
+.signup-app input[type='file'] {
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.signup-app input[type='checkbox'] {
+  width: auto;
+}
+.signup-app .signup-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 12px;
+  color: #b1b3aa;
+}
+.signup-app .signup-check [data-slot='checkbox'] {
+  margin-top: 3px;
+}
+.signup-app [data-slot='tabs-list'] {
+  width: 100%;
+  margin: 10px 0 4px;
+  min-height: 46px;
+}
+.signup-app [data-slot='tabs-trigger'] {
+  flex: 1;
+  white-space: normal;
+}
+.signup-app .signup-card {
+  padding: 18px;
+  margin: 14px 0;
+  background: #191b18;
+  border: 1px solid #33372e;
+  border-radius: 14px;
+  overflow-wrap: anywhere;
+}
+.signup-app .signup-card p:last-child {
+  margin-bottom: 0;
+}
+.signup-app .signup-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.signup-app .signup-icon {
+  padding: 8px;
+  background: transparent;
+  border: 0;
+  color: #b1b3aa;
+}
+.signup-app .signup-guide > div {
+  display: flex;
+  gap: 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid #353732;
+}
+.signup-app .signup-guide > div > span {
+  color: #ed7733;
+  font-size: 12px;
+  padding-top: 3px;
+}
+.signup-app .signup-guide h2 {
+  font-size: 17px;
+  margin: 0 0 5px;
+}
+.signup-app .signup-guide p {
+  color: #b1b3aa;
+  font-size: 14px;
+  margin: 0;
+}
+.signup-app summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 14px;
+  color: #c7c9c0;
+}
+.signup-app .signup-details {
+  margin: 20px 0;
+  border-top: 1px solid #353732;
+  border-bottom: 1px solid #353732;
+}
+.signup-app .signup-details .session-poster {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+.signup-app .signup-participation {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+.signup-app .signup-participation button {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 16px;
+  padding: 22px 16px;
+  border: 1px solid #41443d;
+  background: #191b18;
+  color: #f3f2ec;
+  border-radius: 14px;
+}
+.signup-app .signup-participation button[aria-pressed='true'] {
+  border-color: #ed7733;
+  background: #292119;
+}
+.signup-app .signup-participation button > svg {
+  flex-shrink: 0;
+  color: #d99e74;
+}
+.signup-app .signup-participation button span {
+  flex: 1;
+}
+.signup-app .signup-participation strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 500;
+}
+.signup-app .signup-participation small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: #b1b3aa;
+  margin-top: 5px;
+}
+.signup-app .signup-song-tools {
+  display: flex;
+  gap: 8px;
+  margin: 22px 0 12px;
+}
+.signup-app .signup-song-tools input {
+  min-width: 0;
+  flex: 1;
+}
+.signup-app .signup-song-tools button {
+  flex-shrink: 0;
+  padding: 10px;
+}
+.signup-app .signup-song-list {
+  max-height: 30dvh;
+  min-height: 110px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  padding: 0 10px;
+  border: 1px solid #353732;
+  border-radius: 12px;
+}
+.signup-app .signup-song-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+  background: transparent;
+  color: #f3f2ec;
+  border: 0;
+  border-bottom: 1px solid #353732;
+  border-radius: 0;
+  padding: 14px 4px;
+}
+.signup-app .signup-song-row > svg {
+  flex-shrink: 0;
+  color: #ed7733;
+}
+.signup-app .signup-song-row strong,
+.signup-app .signup-song-row small {
+  display: block;
+}
+.signup-app .signup-song-row strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.signup-app .signup-song-row small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #b1b3aa;
+  margin-top: 3px;
+}
+.signup-app .signup-selected-title {
+  margin: 24px 0 12px;
+}
+.signup-app .signup-selected-title span {
+  color: #ed7733;
+  margin-left: 8px;
+}
+.signup-app .signup-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 10px;
+  padding: 0;
+  border: 0;
+}
+.signup-app .signup-roles legend {
+  font-size: 13px;
+  color: #b1b3aa;
+  margin-bottom: 10px;
+}
+.signup-app .signup-role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  margin: 0;
+  border: 1px solid #41443d;
+  border-radius: 8px;
+}
+.signup-app .signup-role:has([data-checked]) {
+  border-color: #bd8b62;
+  background: #2e251c;
+}
+.signup-app .signup-date {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #41443d;
+  border-radius: 12px;
+  padding: 20px 16px;
+  margin: 12px 0;
+  background: #191b18;
+}
+.signup-app .signup-date.is-selected {
+  border-color: #ed7733;
+  background: #292119;
+}
+.signup-app .signup-success {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 24px;
+}
+.signup-app .signup-success > svg {
+  color: #aad0ae;
+  flex-shrink: 0;
+}
+.signup-app .signup-success h2 {
+  font-size: 17px;
+  margin: 0;
+}
+.signup-app .signup-success p {
+  font-size: 13px;
+  color: #b1b3aa;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.signup-app .signup-result-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.signup-app .signup-bottom {
+  position: fixed;
+  z-index: 30;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 620px);
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 10px;
+  background: #101110f5;
+  border-top: 1px solid #353732;
+  backdrop-filter: blur(14px);
+}
+.signup-app .signup-bottom > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 50px;
+  padding: 12px 8px;
+  text-decoration: none;
+  text-align: center;
+}
+.signup-app .signup-bottom > :last-child {
+  flex: 1.7;
+  background: #ed7733;
+  color: #101110;
+  border-color: #ed7733;
+}
+.signup-app .signup-body .grid2 {
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) {
+  .signup-app {
+    border-inline: 1px solid #282b24;
+  }
+  .signup-app .signup-body {
+    padding: 32px;
+  }
+}
+
 :root,
 .dark {
   --background: #101110;

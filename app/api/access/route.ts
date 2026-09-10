@@ -8,6 +8,7 @@ import {
   runtime,
   me,
   cleanSessionId,
+  settings,
 } from '@/lib/server';
 import {
   contactKey,
@@ -65,6 +66,49 @@ export async function POST(req: Request) {
           current.id,
         )
         .run();
+    } else if (data.type === 'register') {
+      await settings(sessionId);
+      const name = str(data.name, 50);
+      const contact = str(data.contact, 150);
+      if (!name || !contact) throw new Error('请填写名字和联系方式');
+      const key = scopedContactKey(sessionId, contact);
+      await limitAccess(
+        'register-ip',
+        req.headers.get('cf-connecting-ip') || 'local',
+        20,
+      );
+      const existing = await db()
+        .prepare(
+          'SELECT id FROM people WHERE session_id=? AND (contact_key=? OR contact_key=?)',
+        )
+        .bind(sessionId, key, contactKey(contact))
+        .first();
+      if (existing)
+        return json(
+          {
+            error:
+              '此联系方式已注册，请切换到登录。 / Already registered. Please sign in.',
+          },
+          409,
+        );
+      const credential = await passwordHash(data.password);
+      const memberToken = crypto.randomUUID() + crypto.randomUUID();
+      await db()
+        .prepare(
+          "INSERT INTO people (id,session_id,token_hash,name,contact,availability,selections,contact_key,password_hash,status,created) VALUES (?,?,?,?,?,'[]','[]',?,?,'draft',?)",
+        )
+        .bind(
+          crypto.randomUUID(),
+          sessionId,
+          await hash(memberToken),
+          name,
+          contact,
+          key,
+          credential,
+          new Date().toISOString(),
+        )
+        .run();
+      jar.set('ah_member', memberToken, options);
     } else if (data.type === 'member') {
       const plainKey = contactKey(data.contact);
       const key = scopedContactKey(sessionId, data.contact);
