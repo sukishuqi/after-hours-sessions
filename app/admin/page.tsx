@@ -16,6 +16,7 @@ export default function AdminHome() {
   const [deposit, setDeposit] = useState('10');
   const [dates, setDates] = useState(['']);
   const [usePublicLibrary, setUsePublicLibrary] = useState(true);
+  const [audienceMinimum, setAudienceMinimum] = useState('3');
   const [showNew, setShowNew] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -153,6 +154,7 @@ export default function AdminHome() {
                       deposit,
                       dates: dates.filter(Boolean),
                       usePublicLibrary,
+                      audienceMinimum,
                     });
                     window.location.href = '/admin/' + data.sessionId;
                   });
@@ -240,6 +242,26 @@ export default function AdminHome() {
                     'Use the shared library and add previously collected songs',
                   )}
                 </label>
+                {usePublicLibrary && (
+                  <>
+                    <label htmlFor="new-audience-minimum">
+                      {t(
+                        '围观听众开放名额（至少 3 人）',
+                        'Audience places (minimum 3)',
+                      )}
+                    </label>
+                    <input
+                      id="new-audience-minimum"
+                      type="number"
+                      min="3"
+                      step="1"
+                      value={audienceMinimum}
+                      onChange={(event) =>
+                        setAudienceMinimum(event.target.value)
+                      }
+                    />
+                  </>
+                )}
                 <button disabled={busy} style={{ marginTop: 18 }}>
                   {t('创建并进入管理', 'Create and manage')}
                 </button>

@@ -286,6 +286,29 @@ export default function AdminSession() {
                       'Turn this on to add songs collected in earlier sessions. New suggestions from this session also remain in the shared library.',
                     )}
                   </p>
+                  {data.config.usePublicLibrary !== false && (
+                    <>
+                      <label htmlFor="audience-minimum">
+                        {t(
+                          '围观听众开放名额（至少 3 人）',
+                          'Audience places (minimum 3)',
+                        )}
+                      </label>
+                      <input
+                        id="audience-minimum"
+                        type="number"
+                        min="3"
+                        step="1"
+                        value={data.config.audienceMinimum || 3}
+                        onChange={(e) =>
+                          field(
+                            'audienceMinimum',
+                            String(Math.max(3, Number(e.target.value) || 3)),
+                          )
+                        }
+                      />
+                    </>
+                  )}
                   <label>{t('当前阶段', 'Current stage')}</label>
                   <Tabs
                     value={data.config.phase}
@@ -395,8 +418,8 @@ export default function AdminSession() {
                   </button>
                   <p className="muted">
                     {t(
-                      '截止时间会自动停止对应提交；阶段切换由你手动确认。',
-                      'Deadlines stop submissions automatically; stage changes are controlled by you.',
+                      '阶段可以随时前进或回退。回到收集意向／整理歌单会暂时撤下名单，但不会删除付款记录。',
+                      'Stages can move forward or back at any time. Returning to interest or setlist curation unpublishes the lineup without deleting payment records.',
                     )}
                   </p>
                   <div className="divider" />

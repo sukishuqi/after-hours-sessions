@@ -84,6 +84,10 @@ export async function settings(id = 'session-001'): Promise<Settings> {
   return {
     ...JSON.parse(row.config),
     usePublicLibrary: !!row.use_public_library,
+    audienceMinimum: Math.max(
+      3,
+      Number(JSON.parse(row.config).audienceMinimum || 3),
+    ),
   };
 }
 export async function saveSettings(id: string, config: Settings) {

@@ -90,6 +90,10 @@ export async function POST(req: Request) {
         })),
         deposit: str(data.deposit || '10', 20),
         usePublicLibrary: data.usePublicLibrary !== false,
+        audienceMinimum: Math.max(
+          3,
+          Math.floor(Number(data.audienceMinimum) || 3),
+        ),
       };
       if (
         !Number.isFinite(Number(config.deposit)) ||
@@ -182,6 +186,10 @@ export async function POST(req: Request) {
         paymentInfo: str(input.paymentInfo, 1000),
         refundInfo: str(input.refundInfo, 1000),
         usePublicLibrary: input.usePublicLibrary !== false,
+        audienceMinimum: Math.max(
+          3,
+          Math.floor(Number(input.audienceMinimum) || 3),
+        ),
       };
       for (const v of [config.intentDeadline, config.paymentDeadline])
         if (
@@ -215,23 +223,17 @@ export async function POST(req: Request) {
         const songs = await allSongs(sessionId);
         if (!songs.some((s) => s.final))
           throw new Error('请先确认至少一首最终歌曲');
-        if (
-          config.phase !== old.phase &&
-          Date.parse(config.paymentDeadline + '+08:00') <= Date.now()
-        )
-          throw new Error('付款截止时间必须在未来');
       }
-      if (
-        (old.matchingPublishedAt || old.phase === 'payment') &&
-        (config.selectedDate !== old.selectedDate ||
-          config.deposit !== old.deposit)
-      )
-        throw new Error('名单公布后不可更改活动时间和定金金额');
       if (
         old.matchingPublishedAt &&
         ['intent', 'curating'].includes(config.phase)
-      )
-        throw new Error('名单已公布，为保护席位及付款记录，不能重新匹配');
+      ) {
+        delete config.matchingPublishedAt;
+        await db()
+          .prepare('DELETE FROM settings WHERE id=?')
+          .bind('lineup-publication:' + sessionId)
+          .run();
+      }
       if (config.phase === 'locking' && !old.matchingPublishedAt) {
         if (!['curating', 'payment'].includes(old.phase))
           throw new Error('请先切换到整理歌单并保存，再发布匹配名单');
@@ -246,10 +248,6 @@ export async function POST(req: Request) {
           throw new Error('整场最多 6 首正式歌曲和 2 首备用歌曲');
         if (!songs.some((s) => s.final === 1))
           throw new Error('请先确认至少一首正式歌曲');
-        if (people.some((p) => p.receipt))
-          throw new Error(
-            '存在旧版付款记录，请先联系维护者处理，避免改动已付款席位',
-          );
         const lineup = matchLineup(songs, people, config.selectedDate);
         // The host's selected setlist is authoritative. House musicians can
         // cover missing roles; existing matched members retain payable slots.
@@ -258,11 +256,17 @@ export async function POST(req: Request) {
           .filter((p) => p.participation === 'performer')
           .map((p) => {
             const slots = slotsFor(p.id, lineup),
-              status = slots.some((s) => s.kind === 'main')
+              matchedStatus = slots.some((s) => s.kind === 'main')
                 ? 'invited'
                 : slots.length
                   ? 'standby'
-                  : 'unmatched';
+                  : 'unmatched',
+              status =
+                p.receipt &&
+                slots.some((s) => s.kind === 'main') &&
+                ['pending', 'confirmed', 'rejected'].includes(p.status)
+                  ? p.status
+                  : matchedStatus;
             const assignment = slots
               .map(
                 (slot) =>
@@ -295,15 +299,6 @@ export async function POST(req: Request) {
             ),
         ]);
         return json({ ok: true });
-      }
-      if (config.phase === 'intent' && old.phase !== 'intent') {
-        const row = await db()
-          .prepare(
-            "SELECT id FROM people WHERE session_id=? AND status<>'intent' LIMIT 1",
-          )
-          .bind(sessionId)
-          .first();
-        if (row) throw new Error('已有邀请或付款记录，不能重新开放意向');
       }
       if (config.usePublicLibrary && old.usePublicLibrary === false)
         await db()
