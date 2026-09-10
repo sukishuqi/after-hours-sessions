@@ -29,6 +29,8 @@ export default function AdminSession() {
         'session-001';
   const [savedSongs, setSavedSongs] = useState('');
   const [personQuery, setPersonQuery] = useState('');
+  const [peopleFilter, setPeopleFilter] = useState('all');
+  const [tab, setTab] = useState('setup');
   const [resetPasswords, setResetPasswords] = useState<Record<string, string>>(
     {},
   );
@@ -64,6 +66,8 @@ export default function AdminSession() {
     setChecking(false);
   }
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'people')
+      setTab('people');
     load().catch(() => {
       setError(t('暂时无法加载', 'Unable to load'));
       setChecking(false);
@@ -224,7 +228,7 @@ export default function AdminSession() {
             </button>
           </div>
           <TestingGuide />
-          <Tabs defaultValue="setup">
+          <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
             <TabsList style={{ height: 'auto', flexWrap: 'wrap' }}>
               <TabsTrigger value="setup">
                 {t('时间与阶段', 'Schedule & stages')}
@@ -233,7 +237,7 @@ export default function AdminSession() {
                 {t('最终歌单', 'Setlist')}
               </TabsTrigger>
               <TabsTrigger value="people">
-                {t('阵容与付款', 'Lineup & payments')}
+                {t('报名明细与付款', 'Registrations & payments')}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="setup">
@@ -678,18 +682,43 @@ export default function AdminSession() {
               </section>
             </TabsContent>
             <TabsContent value="people">
-              <Lineup
-                songs={data.lineup || []}
-                preview={!data.config.matchingPublishedAt}
-              />
               <section className="panel">
-                <h2>{t('确认阵容与名额', 'Confirm lineup & places')}</h2>
+                <h2>{t('报名明细', 'Registration details')}</h2>
                 <p className="muted">
                   {t(
-                    '名单由意向自动匹配，无需逐个分配。发布后，正式成员登录即可付款；备用成员不收定金。',
-                    'The lineup is matched automatically from wishes. Once published, main-set musicians can pay; reserve-only musicians pay no deposit.',
+                    '包括排练、Open Jam 和观众。只注册账号、尚未提交意向的人不计入报名。',
+                    'Includes rehearsals, Open Jam and audience. Accounts without a submitted registration are not included.',
                   )}
                 </p>
+                <div
+                  className="row"
+                  aria-label={t('按参与方式筛选', 'Filter by participation')}
+                >
+                  {(['all', 'performer', 'openjam', 'audience'] as const).map(
+                    (kind) => (
+                      <button
+                        key={kind}
+                        className={peopleFilter === kind ? '' : 'subtle'}
+                        aria-pressed={peopleFilter === kind}
+                        onClick={() => setPeopleFilter(kind)}
+                      >
+                        {kind === 'all'
+                          ? t('全部', 'All')
+                          : kind === 'performer'
+                            ? t('排练', 'Rehearsals')
+                            : kind === 'openjam'
+                              ? 'Open Jam'
+                              : t('观众', 'Audience')}
+                        {' · '}
+                        {
+                          data.people.filter(
+                            (p) => kind === 'all' || p.participation === kind,
+                          ).length
+                        }
+                      </button>
+                    ),
+                  )}
+                </div>
                 {!data.people.length && (
                   <p>
                     {t(
@@ -711,10 +740,13 @@ export default function AdminSession() {
                   placeholder={t('仅主理人可见', 'Host only')}
                 />
                 {data.people
-                  .filter((p) =>
-                    (p.name + ' ' + p.contact)
-                      .toLowerCase()
-                      .includes(personQuery.toLowerCase()),
+                  .filter(
+                    (p) =>
+                      (peopleFilter === 'all' ||
+                        p.participation === peopleFilter) &&
+                      (p.name + ' ' + p.contact)
+                        .toLowerCase()
+                        .includes(personQuery.toLowerCase()),
                   )
                   .map((p) => (
                     <article className="song" key={p.id}>
@@ -749,6 +781,9 @@ export default function AdminSession() {
                             : t('观众', 'Audience')}
                       </p>
                       <p>{p.contact}</p>
+                      <p className="muted">
+                        Session · {data.config.title} · {sessionId}
+                      </p>
                       <details>
                         <summary>
                           {t(
@@ -809,6 +844,7 @@ export default function AdminSession() {
                         </button>
                       </details>
                       <p className="muted">
+                        {t('意向时间：', 'Available times: ')}
                         {p.availability
                           .map((v) =>
                             t(
@@ -818,6 +854,21 @@ export default function AdminSession() {
                           )
                           .join(' / ')}
                       </p>
+                      <h4>
+                        {p.participation === 'performer'
+                          ? t('意向歌曲与角色', 'Song preferences & roles')
+                          : t('投票想听的歌', 'Song votes')}
+                      </h4>
+                      {!p.selections.length && (
+                        <p className="muted">
+                          {p.participation === 'performer'
+                            ? t('未选择歌曲', 'No songs selected')
+                            : t(
+                                '未投票（不影响报名）',
+                                'No votes — registration is complete',
+                              )}
+                        </p>
+                      )}
                       {p.selections.map((s, index) => (
                         <div key={s.songId}>
                           <p>
@@ -826,20 +877,31 @@ export default function AdminSession() {
                                 ?.title
                             }{' '}
                             ·{' '}
-                            {priorityOf(s, index) === 1
-                              ? t('第一优先', 'First preference')
-                              : priorityOf(s, index) === 2
-                                ? t('第二优先', 'Second preference')
-                                : t('其他意向', 'Other wish')}{' '}
-                            ·{' '}
+                            {p.participation === 'performer' && (
+                              <>
+                                {priorityOf(s, index) === 1
+                                  ? t('第一优先', 'First preference')
+                                  : priorityOf(s, index) === 2
+                                    ? t('第二优先', 'Second preference')
+                                    : t('其他意向', 'Other wish')}
+                                {' · '}
+                              </>
+                            )}
                             {p.participation === 'performer'
                               ? s.roles.map((r) => t(r)).join(' / ')
                               : t('想听', 'Listener vote')}
                           </p>
-                          <SongReference song={s} />
+                          {p.participation === 'performer' && (
+                            <SongReference song={s} />
+                          )}
                         </div>
                       ))}
-                      {p.note && <p className="notice">{p.note}</p>}
+                      {p.note && (
+                        <p className="notice">
+                          {t('报名备注：', 'Registration note: ')}
+                          {p.note}
+                        </p>
+                      )}
                       {p.assignment && <p className="notice">{p.assignment}</p>}
                       {p.receipt && (
                         <details>
@@ -916,7 +978,27 @@ export default function AdminSession() {
                       )}
                     </article>
                   ))}
+                {!!data.people.length &&
+                  !data.people.some(
+                    (p) =>
+                      (peopleFilter === 'all' ||
+                        p.participation === peopleFilter) &&
+                      (p.name + ' ' + p.contact)
+                        .toLowerCase()
+                        .includes(personQuery.toLowerCase()),
+                  ) && (
+                    <p className="muted">
+                      {t('没有符合条件的报名。', 'No matching registrations.')}
+                    </p>
+                  )}
               </section>
+              <details className="panel">
+                <summary>{t('查看排练阵容', 'View rehearsal lineup')}</summary>
+                <Lineup
+                  songs={data.lineup || []}
+                  preview={!data.config.matchingPublishedAt}
+                />
+              </details>
             </TabsContent>
           </Tabs>
         </>

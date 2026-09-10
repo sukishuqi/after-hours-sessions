@@ -282,6 +282,12 @@ export default function AdminHome() {
                   <a className="session-cta" href={'/admin/' + session.slug}>
                     {t('管理活动', 'Manage')} <span>↗</span>
                   </a>
+                  <a
+                    className="session-cta"
+                    href={'/admin/' + session.slug + '?tab=people'}
+                  >
+                    {t('报名明细', 'Registrations')} <span>↗</span>
+                  </a>
                 </div>
               </article>
             ))}
