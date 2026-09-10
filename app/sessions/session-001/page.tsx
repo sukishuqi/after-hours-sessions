@@ -376,10 +376,7 @@ export default function Home() {
                 {t('只参加 Open Jam', 'Open Jam only')}
               </TabsTrigger>
               <TabsTrigger value="audience">
-                {t(
-                  `来当观众 · ${config.audienceMinimum || 3}+ 名额`,
-                  `Come to listen · ${config.audienceMinimum || 3}+ places`,
-                )}
+                {t('来当观众', 'Come to listen')}
               </TabsTrigger>
             </TabsList>
           </Tabs>

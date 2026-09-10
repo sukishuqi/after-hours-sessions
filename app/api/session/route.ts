@@ -37,11 +37,15 @@ export async function GET(req: Request) {
         return {
           ...s,
           count: interested.length,
-          votes: people.filter(
-            (p) =>
-              p.participation !== 'performer' &&
-              p.selections.some((c) => c.songId === s.id),
-          ).length,
+          votes:
+            (config.usePublicLibrary === false
+              ? 0
+              : Math.max(3, Number(config.audienceVoteSeed) || 3)) +
+            people.filter(
+              (p) =>
+                p.participation !== 'performer' &&
+                p.selections.some((c) => c.songId === s.id),
+            ).length,
           counts: Object.fromEntries(
             s.roles.map((r) => [
               r,

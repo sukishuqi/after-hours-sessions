@@ -16,7 +16,7 @@ export default function AdminHome() {
   const [deposit, setDeposit] = useState('10');
   const [dates, setDates] = useState(['']);
   const [usePublicLibrary, setUsePublicLibrary] = useState(true);
-  const [audienceMinimum, setAudienceMinimum] = useState('3');
+  const [audienceVoteSeed, setAudienceVoteSeed] = useState('3');
   const [showNew, setShowNew] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -154,7 +154,7 @@ export default function AdminHome() {
                       deposit,
                       dates: dates.filter(Boolean),
                       usePublicLibrary,
-                      audienceMinimum,
+                      audienceVoteSeed,
                     });
                     window.location.href = '/admin/' + data.sessionId;
                   });
@@ -244,20 +244,20 @@ export default function AdminHome() {
                 </label>
                 {usePublicLibrary && (
                   <>
-                    <label htmlFor="new-audience-minimum">
+                    <label htmlFor="new-audience-vote-seed">
                       {t(
-                        '围观听众开放名额（至少 3 人）',
-                        'Audience places (minimum 3)',
+                        '公共歌曲初始想听数（至少 3）',
+                        'Starting listener votes per song (minimum 3)',
                       )}
                     </label>
                     <input
-                      id="new-audience-minimum"
+                      id="new-audience-vote-seed"
                       type="number"
                       min="3"
                       step="1"
-                      value={audienceMinimum}
+                      value={audienceVoteSeed}
                       onChange={(event) =>
-                        setAudienceMinimum(event.target.value)
+                        setAudienceVoteSeed(event.target.value)
                       }
                     />
                   </>

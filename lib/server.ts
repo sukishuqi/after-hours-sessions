@@ -81,12 +81,13 @@ export async function settings(id = 'session-001'): Promise<Settings> {
     .bind(sessionId)
     .first<{ config: string; use_public_library: number }>();
   if (!row) throw new Error('找不到这个 Session');
+  const config = JSON.parse(row.config);
   return {
-    ...JSON.parse(row.config),
+    ...config,
     usePublicLibrary: !!row.use_public_library,
-    audienceMinimum: Math.max(
+    audienceVoteSeed: Math.max(
       3,
-      Number(JSON.parse(row.config).audienceMinimum || 3),
+      Number(config.audienceVoteSeed || config.audienceMinimum || 3),
     ),
   };
 }

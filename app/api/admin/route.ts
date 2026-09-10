@@ -90,9 +90,9 @@ export async function POST(req: Request) {
         })),
         deposit: str(data.deposit || '10', 20),
         usePublicLibrary: data.usePublicLibrary !== false,
-        audienceMinimum: Math.max(
+        audienceVoteSeed: Math.max(
           3,
-          Math.floor(Number(data.audienceMinimum) || 3),
+          Math.floor(Number(data.audienceVoteSeed) || 3),
         ),
       };
       if (
@@ -186,11 +186,15 @@ export async function POST(req: Request) {
         paymentInfo: str(input.paymentInfo, 1000),
         refundInfo: str(input.refundInfo, 1000),
         usePublicLibrary: input.usePublicLibrary !== false,
-        audienceMinimum: Math.max(
+        audienceVoteSeed: Math.max(
           3,
-          Math.floor(Number(input.audienceMinimum) || 3),
+          Math.floor(
+            Number(input.audienceVoteSeed || input.audienceMinimum) || 3,
+          ),
         ),
       };
+      delete (config as Settings & { audienceMinimum?: number })
+        .audienceMinimum;
       for (const v of [config.intentDeadline, config.paymentDeadline])
         if (
           v &&

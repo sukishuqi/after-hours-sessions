@@ -288,21 +288,21 @@ export default function AdminSession() {
                   </p>
                   {data.config.usePublicLibrary !== false && (
                     <>
-                      <label htmlFor="audience-minimum">
+                      <label htmlFor="audience-vote-seed">
                         {t(
-                          '围观听众开放名额（至少 3 人）',
-                          'Audience places (minimum 3)',
+                          '公共歌曲初始想听数（至少 3）',
+                          'Starting listener votes per song (minimum 3)',
                         )}
                       </label>
                       <input
-                        id="audience-minimum"
+                        id="audience-vote-seed"
                         type="number"
                         min="3"
                         step="1"
-                        value={data.config.audienceMinimum || 3}
+                        value={data.config.audienceVoteSeed || 3}
                         onChange={(e) =>
                           field(
-                            'audienceMinimum',
+                            'audienceVoteSeed',
                             String(Math.max(3, Number(e.target.value) || 3)),
                           )
                         }
@@ -542,8 +542,8 @@ export default function AdminSession() {
                 </button>
                 <p className="muted">
                   {t(
-                    '只添加歌曲，不会产生虚构报名或投票。',
-                    'Adds a song without creating registrations or votes.',
+                    '歌曲会沿用本场设置的初始想听数；之后每个真实投票继续加 1。',
+                    'Songs use this session’s starting listener count; each real vote adds one.',
                   )}
                 </p>
               </section>

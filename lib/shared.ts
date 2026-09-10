@@ -55,7 +55,7 @@ export type Settings = {
   wechatQR: string;
   poster?: string;
   usePublicLibrary?: boolean;
-  audienceMinimum?: number;
+  audienceVoteSeed?: number;
 };
 export type SessionSummary = {
   id: string;
@@ -96,7 +96,7 @@ export const defaults: Settings = {
   paynowQR: '',
   wechatQR: '',
   usePublicLibrary: true,
-  audienceMinimum: 3,
+  audienceVoteSeed: 3,
 };
 export function expired(date: string) {
   return !!date && Date.now() > new Date(date + '+08:00').getTime();
