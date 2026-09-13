@@ -249,6 +249,31 @@ async function success(route, body) {
   console.log(
     'PASS: protected, idempotent roster import preserves accounts and records pending identity/time honestly.',
   );
+  const admin = require('../app/api/admin/route.ts');
+  const cleanup = {
+    action: 'cleanup-registrations',
+    operationId: 'test-cleanup',
+    removePeople: [{ id: prereg.id, name: prereg.name }],
+    removeRoles: [{ id: draft.id, name: credentials.name, roles: ['主唱'] }],
+  };
+  assert.equal((await success(admin, cleanup)).removed, 1);
+  assert(!(await server.allPeople()).some((p) => p.id === prereg.id));
+  assert(
+    (await server.allPeople())
+      .find((p) => p.id === draft.id)
+      .selections.every((s) => !s.roles.includes('主唱')),
+  );
+  assert.equal(
+    (await success(admin, cleanup)).alreadyApplied,
+    true,
+    'Repeated cleanup is safe',
+  );
+  assert(
+    sql
+      .prepare('SELECT id FROM settings WHERE id=?')
+      .get('registration-trash:session-001:test-cleanup'),
+    'Recovery archive is retained',
+  );
   sql.close();
 })().catch((error) => {
   console.error(error);

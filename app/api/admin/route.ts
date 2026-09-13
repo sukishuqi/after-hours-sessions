@@ -53,7 +53,123 @@ export async function POST(req: Request) {
     await requireAdmin();
     const data: any = await req.json();
     const sessionId = cleanSessionId(data.sessionId);
-    if (data.action === 'create-session') {
+    if (data.action === 'cleanup-registrations') {
+      const config = await settings(sessionId);
+      if (
+        config.matchingPublishedAt ||
+        !['intent', 'curating'].includes(config.phase)
+      )
+        throw new Error('请先回到收集意向阶段再清理');
+      const operationId = str(data.operationId, 80);
+      if (!/^[a-z0-9-]{1,80}$/.test(operationId))
+        throw new Error('清理编号无效');
+      const removals = data.removePeople || [],
+        roleEdits = data.removeRoles || [];
+      if (
+        !Array.isArray(removals) ||
+        !Array.isArray(roleEdits) ||
+        (!removals.length && !roleEdits.length) ||
+        removals.length + roleEdits.length > 30
+      )
+        throw new Error('清理清单无效');
+      const archiveId = 'registration-trash:' + sessionId + ':' + operationId;
+      const request = JSON.stringify({ removals, roleEdits });
+      const archived = await db()
+        .prepare('SELECT value FROM settings WHERE id=?')
+        .bind(archiveId)
+        .first<{ value: string }>();
+      if (archived) {
+        if (JSON.parse(archived.value).request !== request)
+          throw new Error('清理编号已被其他操作使用');
+        return json({
+          ok: true,
+          alreadyApplied: true,
+          removed: removals.length,
+          edited: roleEdits.length,
+        });
+      }
+      const rows: Record<string, unknown>[] = [];
+      const ids = new Set<string>();
+      const statements: D1PreparedStatement[] = [];
+      for (const item of [...removals, ...roleEdits]) {
+        const id = str(item.id, 150),
+          name = str(item.name, 50);
+        if (ids.has(id)) throw new Error('重复目标');
+        ids.add(id);
+        const row = await db()
+          .prepare(
+            'SELECT * FROM people WHERE id=? AND session_id=? AND name=?',
+          )
+          .bind(id, sessionId, name)
+          .first<Record<string, unknown>>();
+        if (!row) throw new Error('报名记录已变化，请重新核对姓名');
+        if (
+          row.receipt ||
+          ['pending', 'confirmed'].includes(String(row.status))
+        )
+          throw new Error('记录包含付款信息，不能作为测试数据清理');
+        rows.push(row);
+        if (removals.includes(item))
+          statements.push(
+            db()
+              .prepare(
+                'DELETE FROM people WHERE id=? AND session_id=? AND name=?',
+              )
+              .bind(id, sessionId, name),
+          );
+        else {
+          if (
+            !Array.isArray(item.roles) ||
+            !item.roles.length ||
+            item.roles.some((role: string) => !ROLES.includes(role))
+          )
+            throw new Error('移除角色无效');
+          const selections = JSON.parse(String(row.selections))
+            .map((s: any) => ({
+              ...s,
+              roles: s.roles.filter((r: string) => !item.roles.includes(r)),
+              manualStandbyRoles: (s.manualStandbyRoles || []).filter(
+                (r: string) => !item.roles.includes(r),
+              ),
+            }))
+            .filter((s: any) => s.roles.length);
+          const slots = JSON.parse(String(row.slots || '[]')).filter(
+            (s: any) => !item.roles.includes(s.role),
+          );
+          statements.push(
+            db()
+              .prepare(
+                'UPDATE people SET selections=?,slots=? WHERE id=? AND session_id=?',
+              )
+              .bind(
+                JSON.stringify(selections),
+                JSON.stringify(slots),
+                id,
+                sessionId,
+              ),
+          );
+        }
+      }
+      // Archive full original rows inside the protected database for recovery.
+      statements.unshift(
+        db()
+          .prepare('INSERT INTO settings (id,value) VALUES (?,?)')
+          .bind(
+            archiveId,
+            JSON.stringify({
+              request,
+              created: new Date().toISOString(),
+              rows,
+            }),
+          ),
+      );
+      await db().batch(statements);
+      return json({
+        ok: true,
+        removed: removals.length,
+        edited: roleEdits.length,
+      });
+    } else if (data.action === 'create-session') {
       const sessions = await allSessions();
       const next =
         Math.max(
