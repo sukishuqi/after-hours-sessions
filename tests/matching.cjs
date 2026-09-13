@@ -161,3 +161,26 @@ assert.equal(
 console.log(
   'PASS: vacancy ordering, shared-date coverage and non-displacing standby matching.',
 );
+const manual = person('manual', [
+  { ...wish('main', ['主唱', '吉他'], 1), manualStandbyRoles: ['主唱'] },
+]);
+const manualMatch = matchLineup([songs[0]], [manual], 'date')[0];
+assert(
+  manualMatch.missing.includes('主唱'),
+  'Manual standby leaves lead vocal open',
+);
+assert.equal(manualMatch.members[0].role, '吉他', 'Other roles are retained');
+assert.equal(
+  matchLineup(
+    [songs[0]],
+    [
+      {
+        ...manual,
+        selections: manual.selections.map((s) => ({ ...s, substitute: true })),
+      },
+    ],
+    'date',
+  )[0].members.some((m) => m.role === '主唱'),
+  false,
+  'Automatic standby matching also respects manual-only roles',
+);

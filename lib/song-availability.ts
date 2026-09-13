@@ -9,7 +9,12 @@ export function songVacancies(
 ) {
   const primary = people.map((p) => ({
     ...p,
-    selections: p.selections.filter((s) => !s.substitute),
+    selections: p.selections
+      .filter((s) => !s.substitute)
+      .map((s) => ({
+        ...s,
+        roles: s.roles.filter((role) => !s.manualStandbyRoles?.includes(role)),
+      })),
   }));
   const dates = config.selectedDate
     ? [{ id: config.selectedDate, label: config.selectedDate }]

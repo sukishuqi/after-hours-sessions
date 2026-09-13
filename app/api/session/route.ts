@@ -54,7 +54,11 @@ export async function GET(req: Request) {
               r,
               interested.filter((p) =>
                 p.selections.some(
-                  (c) => c.songId === s.id && c.roles.includes(r),
+                  (c) =>
+                    c.songId === s.id &&
+                    c.roles.includes(r) &&
+                    !c.manualStandbyRoles?.includes(r) &&
+                    !c.substitute,
                 ),
               ).length,
             ]),

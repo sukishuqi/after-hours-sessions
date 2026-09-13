@@ -77,7 +77,10 @@ function matchPrimaryGroup(
         gate = node();
       edge(p, gate, 1, priority === 1 ? 0 : priority === 2 ? 1000 : 100000);
       for (const role of song.roles)
-        if (selection.roles.includes(role))
+        if (
+          selection.roles.includes(role) &&
+          !selection.manualStandbyRoles?.includes(role)
+        )
           links.push({
             songId: song.id,
             person,

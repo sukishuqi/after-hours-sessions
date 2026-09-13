@@ -124,14 +124,25 @@ export async function POST(req: Request) {
     } else if (data.action === 'reset-member-password') {
       const p = (await allPeople(sessionId)).find((p) => p.id === data.id);
       if (!p) throw new Error('找不到报名记录');
+      const contact = p.contact || str(data.contact, 150);
+      if (!contact) throw new Error('请先核实并填写本人的联系方式');
+      const duplicate = await db()
+        .prepare(
+          'SELECT id FROM people WHERE session_id=? AND contact_key=? AND id<>?',
+        )
+        .bind(sessionId, scopedContactKey(sessionId, contact), p.id)
+        .first();
+      if (duplicate)
+        throw new Error('该联系方式已有报名，请先核对，不要重复绑定');
       await db()
         .prepare(
-          'UPDATE people SET password_hash=?,contact_key=?,token_hash=? WHERE id=?',
+          'UPDATE people SET password_hash=?,contact_key=?,token_hash=?,contact=? WHERE id=?',
         )
         .bind(
           await passwordHash(data.password),
-          scopedContactKey(sessionId, p.contact),
+          scopedContactKey(sessionId, contact),
           await hash(crypto.randomUUID()),
+          contact,
           p.id,
         )
         .run();

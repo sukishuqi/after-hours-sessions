@@ -132,14 +132,12 @@ async function success(route, body) {
   await success(access, { type: 'member', ...credentials });
   const songs = await server.allSongs(),
     availability = config.dates.map((d) => d.id);
-  const selections = songs
-    .slice(0, 2)
-    .map((song, i) => ({
-      songId: song.id,
-      roles: ['主唱'],
-      priority: i + 1,
-      substitute: i === 1,
-    }));
+  const selections = songs.slice(0, 2).map((song, i) => ({
+    songId: song.id,
+    roles: ['主唱'],
+    priority: i + 1,
+    substitute: i === 1,
+  }));
   await success(intent, {
     name: credentials.name,
     contact: credentials.contact,
@@ -194,6 +192,62 @@ async function success(route, body) {
   }
   console.log(
     'PASS: draft registration, password login, duplicate protection, multi-date submission, attendance counts and closed-session guest branches.',
+  );
+  const roster = require('../app/api/admin/roster/route.ts');
+  config.phase = 'intent';
+  await server.saveSettings('session-001', config);
+  const importData = {
+    intentDeadline: '2099-09-13T23:59',
+    songs: [
+      {
+        id: songs[0].id,
+        title: songs[0].title,
+        members: [
+          {
+            name: credentials.name,
+            personId: draft.id,
+            roles: ['主唱'],
+            manualStandbyRoles: ['主唱'],
+          },
+          { name: 'Pre-registered singer', roles: ['主唱'] },
+        ],
+      },
+    ],
+  };
+  assert.notEqual(
+    (await call(roster, importData)).status,
+    200,
+    'Import requires host authorization',
+  );
+  server.runtime.ADMIN_KEY = 'local-test-host';
+  jar.set(
+    'ah_admin',
+    await server.hash(server.runtime.ADMIN_KEY + '|admin-session'),
+  );
+  const imported = await success(roster, importData);
+  assert.equal(imported.created, 1);
+  assert.equal(imported.updated, 1);
+  assert.equal(
+    (await success(roster, importData)).created,
+    0,
+    'Repeated import does not duplicate people',
+  );
+  const prereg = (await server.allPeople()).find(
+    (p) => p.name === 'Pre-registered singer',
+  );
+  assert.equal(prereg.contact, '');
+  assert.deepEqual(prereg.availability, []);
+  assert.equal(prereg.hasPassword, false);
+  const original = (await server.allPeople()).find((p) => p.id === draft.id);
+  assert.equal(original.contact, credentials.contact);
+  assert.deepEqual(original.availability, availability);
+  assert.deepEqual(
+    original.selections.find((s) => s.songId === songs[0].id)
+      .manualStandbyRoles,
+    ['主唱'],
+  );
+  console.log(
+    'PASS: protected, idempotent roster import preserves accounts and records pending identity/time honestly.',
   );
   sql.close();
 })().catch((error) => {

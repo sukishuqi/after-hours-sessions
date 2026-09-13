@@ -29,6 +29,9 @@ export default function AdminSession() {
         'session-001';
   const [savedSongs, setSavedSongs] = useState('');
   const [personQuery, setPersonQuery] = useState('');
+  const [claimContacts, setClaimContacts] = useState<Record<string, string>>(
+    {},
+  );
   const [peopleFilter, setPeopleFilter] = useState('all');
   const [tab, setTab] = useState('setup');
   const [resetPasswords, setResetPasswords] = useState<Record<string, string>>(
@@ -780,7 +783,13 @@ export default function AdminSession() {
                             ? 'Open Jam'
                             : t('观众', 'Audience')}
                       </p>
-                      <p>{p.contact}</p>
+                      <p>
+                        {p.contact ||
+                          t(
+                            '主理人预登记 · 联系方式待补充',
+                            'Host pre-registration · Contact pending',
+                          )}
+                      </p>
                       <p className="muted">
                         Session · {data.config.title} · {sessionId}
                       </p>
@@ -803,6 +812,27 @@ export default function AdminSession() {
                             'New registration password (at least 8 characters)',
                           )}
                         </label>
+                        {!p.contact && (
+                          <>
+                            <label htmlFor={'claim-' + p.id}>
+                              {t(
+                                '已核实的微信 ID / WhatsApp 手机号',
+                                'Verified WeChat ID / WhatsApp number',
+                              )}
+                            </label>
+                            <input
+                              id={'claim-' + p.id}
+                              value={claimContacts[p.id] || ''}
+                              onChange={(e) =>
+                                setClaimContacts({
+                                  ...claimContacts,
+                                  [p.id]: e.target.value,
+                                })
+                              }
+                              maxLength={150}
+                            />
+                          </>
+                        )}
                         <input
                           id={'reset-' + p.id}
                           type="password"
@@ -829,6 +859,7 @@ export default function AdminSession() {
                                 action: 'reset-member-password',
                                 id: p.id,
                                 password: resetPasswords[p.id],
+                                contact: claimContacts[p.id],
                               });
                               setResetPasswords({
                                 ...resetPasswords,
@@ -845,6 +876,8 @@ export default function AdminSession() {
                       </details>
                       <p className="muted">
                         {t('意向时间：', 'Available times: ')}
+                        {!p.availability.length &&
+                          t('待本人确认', 'Awaiting attendee confirmation')}
                         {p.availability
                           .map((v) =>
                             t(
@@ -894,6 +927,17 @@ export default function AdminSession() {
                           </p>
                           {p.participation === 'performer' && (
                             <SongReference song={s} />
+                          )}
+                          {!!s.manualStandbyRoles?.length && (
+                            <p className="notice">
+                              {t(
+                                '仅补位，需主理人安排：',
+                                'Manual standby only: ',
+                              )}
+                              {s.manualStandbyRoles
+                                .map((role) => t(role))
+                                .join(' / ')}
+                            </p>
                           )}
                         </div>
                       ))}

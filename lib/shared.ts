@@ -1,6 +1,7 @@
 import { canonicalTitle } from './catalog';
 export const ROLES = ['主唱', '吉他', '贝斯', '鼓', '键盘', '和声', '其他'];
 export type Selection = {
+  manualStandbyRoles?: string[];
   substitute?: boolean;
   priority?: 1 | 2 | 3;
   songId: string;
@@ -127,7 +128,12 @@ export function scoreTimes(
         function assign(role: string, seen: Set<string>): boolean {
           for (const p of interested) {
             const choice = p.selections.find((s) => s.songId === song.id);
-            if (!choice?.roles.includes(role) || seen.has(p.id)) continue;
+            if (
+              !choice?.roles.includes(role) ||
+              choice.manualStandbyRoles?.includes(role) ||
+              seen.has(p.id)
+            )
+              continue;
             seen.add(p.id);
             const old = matched.get(p.id);
             if (!old || assign(old, seen)) {

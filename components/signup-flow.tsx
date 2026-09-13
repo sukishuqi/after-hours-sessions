@@ -795,6 +795,17 @@ export default function SignupFlow() {
                     </div>
                     {performing && (
                       <>
+                        {!!choice.manualStandbyRoles?.length && (
+                          <p className="notice">
+                            {t(
+                              '这些角色仅作补位，由主理人另行安排：',
+                              'These roles are manual standby only: ',
+                            )}
+                            {choice.manualStandbyRoles
+                              .map((role) => t(role))
+                              .join(' / ')}
+                          </p>
+                        )}
                         <label className="signup-check">
                           <Checkbox
                             checked={!!choice.substitute}
@@ -1027,6 +1038,14 @@ export default function SignupFlow() {
                             )}
                           </h3>
                           <p>{choice.roles.map((r) => t(r)).join(' / ')}</p>
+                          {!!choice.manualStandbyRoles?.length && (
+                            <p className="notice">
+                              {t('仅补位：', 'Manual standby: ')}
+                              {choice.manualStandbyRoles
+                                .map((role) => t(role))
+                                .join(' / ')}
+                            </p>
+                          )}
                           {choice.preferred_key && (
                             <small>Key: {choice.preferred_key}</small>
                           )}

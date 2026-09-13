@@ -134,6 +134,9 @@ export async function POST(req: Request) {
         throw new Error('两首意向歌曲不能重复');
       selections.push({
         ...songMetadata(c.newSong || c),
+        manualStandbyRoles:
+          current?.selections.find((s) => s.songId === songId)
+            ?.manualStandbyRoles || [],
         substitute: performing && c.substitute === true,
         priority: performing ? priority : 3,
         songId,
